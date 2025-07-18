@@ -5,7 +5,7 @@ import { useClerk, useUser, UserButton,} from "@clerk/clerk-react";
 
 const Navbar = () => {
   const { openSignIn } = useClerk();
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn } = useUser();
 
   return (
     <div className="flex items-center justify-between mx-4 py-3 lg:mx-44">
