@@ -1,5 +1,8 @@
 import jwt from 'jsonwebtoken';
 
+
+
+
 // Middleware Function to declare jwt token to get clerkId
 export const authUser = async (req, res, next) => {
   try {
