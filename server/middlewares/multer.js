@@ -2,7 +2,7 @@ import multer from "multer";
 
 // creating multer middleware for parsing formdata
 const storage = multer.diskStorage({
-      filename:function(re,file,callback){
+      filename:function(req,file,callback){
          callback(null,`${DataTransfer.now()}_${file.originalname}`)
       }
 })
