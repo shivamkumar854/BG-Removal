@@ -1,13 +1,23 @@
 import multer from "multer";
+import fs from "fs";
+import path from "path";
 
-// creating multer middleware for parsing formdata
+// Ensure uploads folder exists
+const uploadPath = path.join('uploads');
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
+
+// Configure multer storage
 const storage = multer.diskStorage({
-      filename:function(req,file,callback){
-         callback(null,`${DataTransfer.now()}_${file.originalname}`)
-      }
-})
+  destination: function (req, file, callback) {
+    callback(null, uploadPath);
+  },
+  filename: function (req, file, callback) {
+    callback(null, `${Date.now()}_${file.originalname}`);
+  },
+});
 
+const upload = multer({ storage });
 
-const upload = multer({storage})
-
-export default upload
+export default upload;

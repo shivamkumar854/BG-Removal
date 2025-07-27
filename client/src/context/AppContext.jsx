@@ -1,27 +1,31 @@
 import { createContext, useState } from 'react';
-import { useAuth, useUser,useClerk } from '@clerk/clerk-react'; // ✅ Corrected imports
+import { useAuth, useUser, useClerk } from '@clerk/clerk-react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import {useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom';
 
 export const AppContext = createContext();
 
 const AppContextProvider = (props) => {
   const [credit, setCredit] = useState(0);
   const [image, setImage] = useState(false);
-  const [resultImage, setResultImage] = useState(false)
+  const [resultImage, setResultImage] = useState(false);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const { getToken } = useAuth();     // ✅ Correct usage
-  const { isSignedIn } = useUser(); 
-  const {openSignIn} = useClerk(); // ✅ Corrected typo
+  const { getToken } = useAuth();
+  const { isSignedIn } = useUser();
+  const { openSignIn } = useClerk();
 
-  const loadCreditsData = async (clerkId) => {
+  // ✅ Load user credits from backend with token
+  const loadCreditsData = async () => {
     try {
+      const token = await getToken();
       const { data } = await axios.get(`${backendUrl}/api/user/credits`, {
-        headers: { clerkid: clerkId },
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ use Bearer token
+        },
       });
 
       if (data.success) {
@@ -34,35 +38,46 @@ const AppContextProvider = (props) => {
     }
   };
 
+  // ✅ Remove image background with Clerk token
   const removeBg = async (image) => {
     try {
-
       if (!isSignedIn) {
-            return openSignIn()
+        return openSignIn();
       }
 
-      setImage(image)
-      setResultImage(false)
+      setImage(image);
+      setResultImage(false);
+      navigate('/result');
 
-      navigate('/result')
+      const token = await getToken();
 
-      const token = await getToken()
+      const formData = new FormData();
+      if (image) formData.append('image', image);
 
-      const formData = new FormData()
-      image && formData.append('image',image)
+      const { data } = await axios.post(
+        `${backendUrl}/api/image/remove-bg`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ also here
+          },
+        }
+      );
 
-      const {data} =await axios.post(backendUrl+'/api/image/remove-bg',formData,{headers:{token}})
-      
-       if (data.success) {
-             setResultImage(data.resultimage)
-             data.creditBalance && setCredit(data.creditBalance)
-       } else {
-         toast.error(data.message)
-         data.creditBalance && setCredit(data.creditBalance)
-         if (data.creditBalance === 0) {
-           navigate('/buy')
-         }
-       }
+      if (data.success) {
+        setResultImage(data.resultimage);
+        if (data.creditBalance !== undefined) {
+          setCredit(data.creditBalance);
+        }
+      } else {
+        toast.error(data.message);
+        if (data.creditBalance !== undefined) {
+          setCredit(data.creditBalance);
+        }
+        if (data.creditBalance === 0) {
+          navigate('/buy');
+        }
+      }
 
     } catch (error) {
       console.log("Error removing background:", error);
@@ -77,7 +92,9 @@ const AppContextProvider = (props) => {
     backendUrl,
     image,
     setImage,
-    removeBg
+    removeBg,
+    resultImage,
+    setResultImage,
   };
 
   return (

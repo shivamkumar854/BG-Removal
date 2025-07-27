@@ -4,28 +4,33 @@ import cors from 'cors';
 import connectDB from './configs/mongodb.js';
 import userRouter from './routes/userRoutes.js';
 import imageRouter from './routes/imageRoutes.js';
+import { ClerkExpressWithAuth } from '@clerk/clerk-sdk-node'; // ✅ Clerk middleware
 
-// App Config
-const PORT = process.env.PORT || 4000;
 const app = express();
+const PORT = process.env.PORT || 4000;
 
-// Initialize Middleware
+// Middleware
 app.use(express.json());
 app.use(cors());
 
-// API routes
-app.get('/', (req, res) => res.send('API Working'));
+// ✅ Clerk middleware - Required to enable getAuth(req)
+app.use(ClerkExpressWithAuth());
+
+// Routes
+app.get('/', (req, res) => res.send('✅ API is working'));
 app.use('/api/user', userRouter);
 app.use('/api/image', imageRouter);
 
-// Start server after DB connection
+// Start server
 const startServer = async () => {
   try {
     await connectDB();
-    app.listen(PORT, () => console.log('Server is running on port ' + PORT));
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on http://localhost:${PORT}`)
+    );
   } catch (error) {
-    console.error('❌ Failed to connect to DB:', error.message);
-    process.exit(1); // Exit with failure
+    console.error('❌ Failed to connect to MongoDB:', error.message);
+    process.exit(1);
   }
 };
 
